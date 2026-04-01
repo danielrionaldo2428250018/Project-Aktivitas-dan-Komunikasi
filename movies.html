@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Project</title>
+
+<style>
+
+/* GLOBAL */
+body{
+margin:0;
+font-family:Segoe UI;
+background:#0b0b0d;
+color:white;
+}
+
+/* HEADER */
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 30px;
+background:#121217;
+}
+
+.logo{
+color:#f5c518;
+font-weight:bold;
+font-size:22px;
+}
+
+.nav a{
+color:#aaa;
+margin-left:20px;
+text-decoration:none;
+}
+
+.nav a:hover{
+color:#f5c518;
+}
+
+.nav a.active{
+color:#f5c518;
+border-bottom:2px solid #f5c518;
+}
+
+/* LAYOUT */
+.container{
+display:flex;
+}
+
+/* SIDEBAR */
+.sidebar{
+width:250px;
+background:#16161a;
+padding:20px;
+height:100vh;
+}
+
+.sidebar input,
+.sidebar select{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+background:#0d0d0f;
+color:white;
+border:none;
+border-radius:6px;
+}
+
+/* SUGGESTION */
+#suggestions{
+position:absolute;
+background:#16161a;
+border-radius:6px;
+max-height:200px;
+overflow-y:auto;
+z-index:100;
+}
+
+#suggestions div{
+padding:10px;
+cursor:pointer;
+border-bottom:1px solid #222;
+}
+
+#suggestions div:hover{
+background:#222;
+color:#f5c518;
+}
+
+/* CONTENT */
+.content{
+flex:1;
+}
+
+/* GRID */
+.movies-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+gap:20px;
+padding:20px;
+}
+
+/* CARD */
+.movie-card{
+background:#16161a;
+border-radius:10px;
+overflow:hidden;
+cursor:pointer;
+position:relative;
+transition:0.3s;
+}
+
+.movie-card:hover{
+transform:scale(1.05);
+}
+
+.movie-card img{
+width:100%;
+height:280px;
+object-fit:cover;
+}
+
+/* RATING */
+.rating{
+position:absolute;
+top:10px;
+right:10px;
+background:black;
+padding:5px;
+border-radius:6px;
+color:#f5c518;
+}
+
+/* FAVORITE */
+.favorite{
+position:absolute;
+top:10px;
+left:10px;
+font-size:18px;
+cursor:pointer;
+}
+
+.favorite.active{
+color:red;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header class="header">
+<div class="logo">Project</div>
+
+<nav class="nav">
+<a href="movies.html">Home</a>
+<a href="favorites.html">Favorites</a>
+<a href="account.html">Account</a>
+</nav>
+</header>
+
+<div class="container">
+
+<div class="sidebar">
+
+<h3>Filter</h3>
+
+<div style="position:relative">
+<input id="searchInput" placeholder="Search movie">
+<div id="suggestions"></div>
+</div>
+
+<select id="genreSelect">
+<option value="All Genre">All Genre</option>
+</select>
+
+<input id="yearInput" placeholder="Year">
+
+<button onclick="applyFilter()">Search</button>
+
+</div>
+
+<div class="content">
+<div id="moviesGrid" class="movies-grid"></div>
+</div>
+
+</div>
+
+<script>
+
+const API="66e5a263a9a88234aa2e06e5fca6ffb0"
+const IMG="https://image.tmdb.org/t/p/w500"
+
+let movies=[]
+let page=1
+let loading=false
+let isSearching=false
+
+const user=JSON.parse(localStorage.getItem("currentUser"))
+if(!user) location.href="login.html"
+
+/* LOAD GENRE */
+async function loadGenres(){
+const res=await fetch(`https://api.themoviedb.org/3/genre/movie/list?api_key=${API}`)
+const data=await res.json()
+
+data.genres.forEach(g=>{
+const opt=document.createElement("option")
+opt.value=g.id
+opt.innerText=g.name
+genreSelect.appendChild(opt)
+})
+}
+
+/* LOAD MOVIES */
+async function loadMovies(){
+
+if(loading || isSearching) return
+loading=true
+
+const res=await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${API}&page=${page}`)
+const data=await res.json()
+
+movies=movies.concat(data.results)
+
+renderMovies(movies)
+
+loading=false
+}
+
+/* INFINITE SCROLL */
+window.addEventListener("scroll",()=>{
+if(isSearching) return
+
+if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 200){
+page++
+loadMovies()
+}
+})
+
+/* FAVORITE */
+function getFavorites(){
+return JSON.parse(localStorage.getItem("favorites_"+user.id))||[]
+}
+
+function toggleFavorite(e,id){
+e.stopPropagation()
+
+let fav=getFavorites()
+
+if(fav.includes(id)){
+fav=fav.filter(f=>f!=id)
+}else{
+fav.push(id)
+}
+
+localStorage.setItem("favorites_"+user.id,JSON.stringify(fav))
+renderMovies(movies)
+}
+
+/* RENDER */
+function renderMovies(list){
+
+moviesGrid.innerHTML=""
+
+const fav=getFavorites()
+
+list.forEach(m=>{
+
+if(!m.poster_path) return
+
+const isFav=fav.includes(m.id)
+
+const card=document.createElement("div")
+card.className="movie-card"
+
+card.innerHTML=`
+<div class="favorite ${isFav?'active':''}" onclick="toggleFavorite(event,${m.id})">❤</div>
+<div class="rating">${m.vote_average?.toFixed(1) || "0"}</div>
+<img src="${IMG+m.poster_path}">
+<div style="padding:10px">${m.title}</div>
+`
+
+card.onclick=()=>location.href="detail.html?id="+m.id
+
+moviesGrid.appendChild(card)
+
+})
+}
+
+/* FILTER */
+function applyFilter(){
+
+const text=searchInput.value.toLowerCase()
+const year=yearInput.value
+const genre=genreSelect.value
+
+const filtered=movies.filter(m=>{
+
+const matchTitle=m.title.toLowerCase().includes(text)
+const matchYear=year?m.release_date?.startsWith(year):true
+const matchGenre=genre==="All Genre"?true:m.genre_ids?.includes(Number(genre))
+
+return matchTitle && matchYear && matchGenre
+
+})
+
+renderMovies(filtered)
+}
+
+/* SEARCH API */
+searchInput.addEventListener("input", async function(){
+
+const keyword=this.value
+
+if(!keyword){
+isSearching=false
+suggestions.innerHTML=""
+renderMovies(movies)
+return
+}
+
+isSearching=true
+
+const res=await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${API}&query=${keyword}`)
+const data=await res.json()
+
+renderMovies(data.results)
+
+suggestions.innerHTML=data.results.slice(0,5).map(m=>`
+<div onclick="selectSuggestion('${m.title}')">${m.title}</div>
+`).join("")
+})
+
+function selectSuggestion(title){
+searchInput.value=title
+suggestions.innerHTML=""
+searchInput.dispatchEvent(new Event("input"))
+}
+
+/* NAV ACTIVE */
+const path = window.location.pathname.split("/").pop();
+document.querySelectorAll(".nav a").forEach(link=>{
+if(link.getAttribute("href")===path){
+link.classList.add("active")
+}
+})
+
+/* INIT */
+loadGenres()
+loadMovies()
+
+</script>
+
+</body>
+</html>

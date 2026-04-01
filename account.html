@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>WatchFlix PRO - Account</title>
+
+<style>
+
+/* GLOBAL */
+body{
+margin:0;
+font-family:Segoe UI;
+background:#0b0b0d;
+color:white;
+}
+
+/* HEADER */
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 30px;
+background:#121217;
+}
+
+.logo{
+color:#f5c518;
+font-weight:bold;
+font-size:22px;
+}
+
+.nav a{
+color:#aaa;
+margin-left:20px;
+text-decoration:none;
+}
+
+.nav a:hover{
+color:#f5c518;
+}
+
+/* CENTER BOX */
+.container{
+display:flex;
+justify-content:center;
+align-items:center;
+height:calc(100vh - 70px);
+}
+
+.box{
+background:linear-gradient(145deg,#1c1c22,#111);
+box-shadow:0 0 20px rgba(0,0,0,0.5);
+width:350px;
+padding:30px;
+border-radius:12px;
+text-align:center;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+background:#0d0d0f;
+color:white;
+border:none;
+border-radius:6px;
+}
+
+button{
+margin-top:10px;
+width:100%;
+background:#f5c518;
+border:none;
+padding:10px;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+opacity:0.8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="header">
+<div class="logo">Project</div>
+
+<nav class="nav">
+<a href="movies.html">Home</a>
+<a href="favorites.html">Favorites</a>
+<a href="account.html">Account</a>
+</nav>
+</header>
+
+<!-- CONTENT -->
+<div class="container">
+
+<div class="box">
+
+<h2>👤 Account</h2>
+
+<p id="username"></p>
+
+<input id="nameInput" placeholder="Enter new username">
+
+<button onclick="save()">Save</button>
+<button onclick="logout()">Logout</button>
+
+</div>
+
+</div>
+
+<script>
+
+/* LOAD USER */
+function load(){
+
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  if(!user){
+    window.location = "login.html";
+    return;
+  }
+
+  document.getElementById("username").innerText = "Hello, " + user.username;
+}
+
+/* UPDATE USERNAME */
+function save(){
+
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  if(!user) return;
+
+  const newName = document.getElementById("nameInput").value;
+
+  if(!newName){
+    alert("Masukkan username baru");
+    return;
+  }
+
+  user.username = newName;
+
+  localStorage.setItem("currentUser", JSON.stringify(user));
+
+  alert("Username berhasil diubah");
+
+  load();
+}
+
+/* LOGOUT */
+function logout(){
+  localStorage.removeItem("currentUser");
+  window.location = "login.html";
+}
+
+/* INIT */
+load();
+
+</script>
+
+</body>
+</html>

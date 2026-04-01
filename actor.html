@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Actor Detail</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Segoe UI;
+background:#0b0b0d;
+color:white;
+}
+
+/* LAYOUT */
+.container{
+display:flex;
+padding:30px;
+gap:30px;
+}
+
+/* LEFT */
+.left{
+width:250px;
+}
+
+.left img{
+width:100%;
+border-radius:10px;
+}
+
+.info{
+margin-top:20px;
+font-size:14px;
+line-height:1.6;
+}
+
+/* RIGHT */
+.right{
+flex:1;
+}
+
+.bio{
+margin-bottom:20px;
+}
+
+/* FILM LIST */
+.movies{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+gap:10px;
+}
+
+.movies img{
+width:100%;
+border-radius:8px;
+cursor:pointer;
+transition:0.3s;
+}
+
+.movies img:hover{
+transform:scale(1.05);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="left">
+<img id="photo">
+<div class="info" id="info"></div>
+</div>
+
+<div class="right">
+
+<h1 id="name"></h1>
+
+<div class="bio" id="bio"></div>
+
+<h2>Filmography</h2>
+<div id="movies" class="movies"></div>
+
+</div>
+
+</div>
+
+<script>
+
+const API="66e5a263a9a88234aa2e06e5fca6ffb0"
+const IMG="https://image.tmdb.org/t/p/w500"
+
+const id=new URLSearchParams(location.search).get("id")
+
+loadActor()
+loadMovies()
+
+/* ACTOR */
+async function loadActor(){
+
+const res=await fetch(`https://api.themoviedb.org/3/person/${id}?api_key=${API}`)
+const data=await res.json()
+
+document.getElementById("name").innerText=data.name
+document.getElementById("photo").src=data.profile_path?IMG+data.profile_path:"https://via.placeholder.com/200"
+
+document.getElementById("bio").innerText=data.biography || "No biography available."
+
+document.getElementById("info").innerHTML=`
+<b>Birthday:</b> ${data.birthday || "-"} <br>
+<b>Place:</b> ${data.place_of_birth || "-"} <br>
+<b>Popularity:</b> ${data.popularity}
+`
+}
+
+/* FILMOGRAPHY */
+async function loadMovies(){
+
+const res=await fetch(`https://api.themoviedb.org/3/person/${id}/movie_credits?api_key=${API}`)
+const data=await res.json()
+
+document.getElementById("movies").innerHTML=
+data.cast.slice(0,20).map(m=>`
+<a href="detail.html?id=${m.id}">
+<img src="${m.poster_path?IMG+m.poster_path:'https://via.placeholder.com/100'}">
+</a>
+`).join("")
+}
+
+</script>
+
+</body>
+</html>

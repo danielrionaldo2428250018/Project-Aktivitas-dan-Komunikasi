@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>WatchFlix PRO - Favorites</title>
+
+<style>
+
+/* GLOBAL */
+body{
+margin:0;
+font-family:Segoe UI;
+background:#0b0b0d;
+color:white;
+}
+
+/* HEADER */
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 30px;
+background:#121217;
+}
+
+.logo{
+color:#f5c518;
+font-weight:bold;
+font-size:22px;
+}
+
+.nav a{
+color:#aaa;
+margin-left:20px;
+text-decoration:none;
+}
+
+.nav a:hover{
+color:#f5c518;
+}
+
+/* ACTIVE NAV */
+.nav a.active{
+color:#f5c518;
+border-bottom:2px solid #f5c518;
+padding-bottom:3px;
+}
+
+/* GRID */
+.movies-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+gap:20px;
+padding:20px;
+}
+
+/* CARD */
+.movie-card{
+background:#16161a;
+border-radius:10px;
+overflow:hidden;
+cursor:pointer;
+}
+
+.movie-card img{
+width:100%;
+height:280px;
+object-fit:cover;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header class="header">
+<div class="logo">Project</div>
+
+<nav class="nav">
+<a href="movies.html">Home</a>
+<a href="favorites.html">Favorites</a>
+<a href="account.html">Account</a>
+</nav>
+</header>
+
+<div id="moviesGrid" class="movies-grid"></div>
+
+<script>
+
+const IMG="https://image.tmdb.org/t/p/w500";
+
+/* CEK LOGIN */
+const user = JSON.parse(localStorage.getItem("currentUser"));
+
+if(!user){
+  window.location="login.html";
+}
+
+/* AMBIL FAVORITES USER */
+function getFavorites(){
+  return JSON.parse(localStorage.getItem("favorites_"+user.id)) || [];
+}
+
+/* LOAD DATA */
+async function loadFavorites(){
+
+  const fav = getFavorites();
+
+  if(fav.length === 0){
+    document.getElementById("moviesGrid").innerHTML = "<h2 style='padding:20px'>Belum ada favorite</h2>";
+    return;
+  }
+
+  const grid = document.getElementById("moviesGrid");
+  grid.innerHTML="";
+
+  for(const id of fav){
+
+    const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=66e5a263a9a88234aa2e06e5fca6ffb0`);
+    const m = await res.json();
+
+    const card = document.createElement("div");
+    card.className="movie-card";
+
+    card.innerHTML=`
+      <img src="${IMG+m.poster_path}">
+      <div style="padding:10px">${m.title}</div>
+    `;
+
+    card.onclick=()=>location.href="detail.html?id="+m.id;
+
+    grid.appendChild(card);
+  }
+}
+
+/* NAV ACTIVE */
+const path = window.location.pathname.split("/").pop();
+document.querySelectorAll(".nav a").forEach(link=>{
+  if(link.getAttribute("href") === path){
+    link.classList.add("active");
+  }
+});
+
+/* INIT */
+loadFavorites();
+
+</script>
+
+</body>
+</html>
